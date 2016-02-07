@@ -77,6 +77,16 @@ int reiserfs_embed (int *start_sector, int needed_sectors);
 #define FSYS_REISERFS_NUM 0
 #endif
 
+#ifdef FSYS_BTRFS
+#define FSYS_BTRFS_NUM 1
+int btrfs_mount (void);
+int btrfs_read (char *buf, int len);
+int btrfs_dir (char *dirname);
+int btrfs_embed (int *start_sector, int needed_sectors);
+#else
+#define FSYS_BTRFS_NUM 0
+#endif
+
 #ifdef FSYS_VSTAFS
 #define FSYS_VSTAFS_NUM 1
 int vstafs_mount (void);
@@ -127,8 +137,8 @@ int iso9660_dir (char *dirname);
 #ifndef NUM_FSYS
 #define NUM_FSYS	\
   (FSYS_FFS_NUM + FSYS_FAT_NUM + FSYS_EXT2FS_NUM + FSYS_MINIX_NUM	\
-   + FSYS_REISERFS_NUM + FSYS_VSTAFS_NUM + FSYS_JFS_NUM + FSYS_XFS_NUM	\
-   + FSYS_TFTP_NUM + FSYS_ISO9660_NUM + FSYS_UFS2_NUM)
+   + FSYS_REISERFS_NUM + FSYS_BTRFS_NUM + FSYS_VSTAFS_NUM + FSYS_JFS_NUM \
+   + FSYS_XFS_NUM + FSYS_TFTP_NUM + FSYS_ISO9660_NUM + FSYS_UFS2_NUM)
 #endif
 
 /* defines for the block filesystem info area */

@@ -1761,6 +1761,7 @@ itself. Usually, this is put in a filesystem, but that is not required.
 @itemx jfs_stage1_5
 @itemx minix_stage1_5
 @itemx reiserfs_stage1_5
+@itemx btrfs_stage1_5
 @itemx vstafs_stage1_5
 @itemx xfs_stage1_5
 

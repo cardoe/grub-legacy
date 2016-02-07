@@ -78,6 +78,9 @@ struct fsys_entry fsys_table[NUM_FSYS + 1] =
 # ifdef FSYS_ISO9660
   {"iso9660", iso9660_mount, iso9660_read, iso9660_dir, 0, 0},
 # endif
+# ifdef FSYS_BTRFS
+  {"btrfs", btrfs_mount, btrfs_read, btrfs_dir, 0, btrfs_embed},
+# endif
   /* XX FFS should come last as it's superblock is commonly crossing tracks
      on floppies from track 1 to 2, while others only use 1.  */
 # ifdef FSYS_FFS

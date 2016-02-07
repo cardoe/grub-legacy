@@ -2456,6 +2456,16 @@ install_func (char *arg, int flags)
 	  else
 #endif /* GRUB_UTIL */
 	    {
+ 	      /*
+	       * FIXME: Ugly hack.
+	       * Do not write to btrfs partition
+	       * without a help of the file system!
+	       */
+ 	      if (!strcmp(fsys_table[fsys_type].name, "btrfs"))
+ 		{
+ 		  errnum = ERR_BAD_ARGUMENT;
+ 		  goto fail;
+ 		}
 	      if (! devwrite (saved_sector - part_start, 1, stage2_buffer))
 		goto fail;
 	    }
@@ -4281,6 +4291,7 @@ setup_func (char *arg, int flags)
     {"jfs",      "/jfs_stage1_5"},
     {"minix",    "/minix_stage1_5"},
     {"reiserfs", "/reiserfs_stage1_5"},
+    {"btrfs",    "/btrfs_stage1_5"},
     {"vstafs",   "/vstafs_stage1_5"},
     {"xfs",      "/xfs_stage1_5"}
   };

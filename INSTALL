@@ -207,6 +207,9 @@ operates.
 `--disable-reiserfs'
      Omit the ReiserFS support in Stage 2.
 
+`--disable-btrfs'
+     Omit the BtrFS support in Stage 2.
+
 `--disable-vstafs'
      Omit the VSTa filesystem support in Stage 2.
 

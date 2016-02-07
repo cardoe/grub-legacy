@@ -274,6 +274,13 @@ if test x"$enable_reiserfs" != xno; then
   FSYS_CFLAGS="$FSYS_CFLAGS -DFSYS_REISERFS=1"
 fi
 
+AC_ARG_ENABLE(btrfs,
+  [  --disable-btrfs         disable BtrFS support in Stage 2])
+
+if test x"$enable_btrfs" != xno; then
+  FSYS_CFLAGS="$FSYS_CFLAGS -DFSYS_BTRFS=1"
+fi
+
 AC_ARG_ENABLE(vstafs,
   [  --disable-vstafs        disable VSTa FS support in Stage 2])
 
