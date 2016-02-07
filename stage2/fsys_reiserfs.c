@@ -224,8 +224,8 @@ struct item_head
 
 struct disk_child
 {
-  unsigned long       dc_block_number;              /* Disk child's block number. */
-  unsigned short      dc_size;		            /* Disk child's used space.   */
+  __u32       dc_block_number;              /* Disk child's block number. */
+  __u16      dc_size;		            /* Disk child's used space.   */
 };
 
 #define DC_SIZE (sizeof (struct disk_child))
@@ -369,7 +369,14 @@ struct fsys_reiser_info
 static __inline__ unsigned long
 log2 (unsigned long word)
 {
-  __asm__ ("bsfl %1,%0"
+  __asm__ ("bsf"
+#ifdef __i386__
+		  "l"
+#endif
+#ifdef __x86_64__
+		  "q"
+#endif
+		  " %1,%0"
 	   : "=r" (word)
 	   : "r" (word));
   return word;

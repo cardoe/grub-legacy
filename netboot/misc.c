@@ -21,7 +21,9 @@
 
 #define GRUB	1
 #include <etherboot.h>
+#include <stdarg.h>
 
+#ifndef __MINIOS__
 void
 sleep (int secs)
 {
@@ -30,6 +32,7 @@ sleep (int secs)
   while (currticks () < tmo)
     ;
 }
+#endif
 
 void
 twiddle (void)
@@ -71,7 +74,7 @@ PRINTF and friends
 	Note: width specification not supported
 **************************************************************************/
 static int
-etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
+etherboot_vsprintf (char *buf, const char *fmt, va_list ap)
 {
   char *p, *s;
   
@@ -86,7 +89,7 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
       
       if (*++fmt == 's')
 	{
-	  for (p = (char *) *dp++; *p != '\0'; p++)
+	  for (p = va_arg(ap, char *); *p != '\0'; p++)
 	    buf ? *s++ = *p : grub_putchar (*p);
 	}
       else
@@ -121,11 +124,9 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
 	  if ((*fmt | 0x20) == 'x')
 	    {
 	      /* With x86 gcc, sizeof(long) == sizeof(int) */
-	      const long *lp = (const long *) dp;
-	      long h = *lp++;
+	      long h = va_arg(ap, int);
 	      int ncase = (*fmt & 0x20);
 	      
-	      dp = (const int *) lp;
 	      if (alt)
 		{
 		  *q++ = '0';
@@ -136,7 +137,7 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
 	    }
 	  else if (*fmt == 'd')
 	    {
-	      int i = *dp++;
+	      int i = va_arg(ap, int);
 	      char *r;
 	      
 	      if (i < 0)
@@ -171,10 +172,8 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
 		unsigned char	c[4];
 	      }
 	      u;
-	      const long *lp = (const long *) dp;
 	      
-	      u.l = *lp++;
-	      dp = (const int *) lp;
+	      u.l = va_arg(ap, int);
 	      
 	      for (r = &u.c[0]; r < &u.c[4]; ++r)
 		q += etherboot_sprintf (q, "%d.", *r);
@@ -184,7 +183,7 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
 	  else if (*fmt == '!')
 	    {
 	      char *r;
-	      p = (char *) *dp++;
+	      p = va_arg(ap, char *);
 	      
 	      for (r = p + ETH_ALEN; p < r; ++p)
 		q += etherboot_sprintf (q, "%hhX:", *p);
@@ -192,7 +191,7 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
 	      --q;
 	    }
 	  else if (*fmt == 'c')
-	    *q++ = *dp++;
+	    *q++ = va_arg(ap, int);
 	  else
 	    *q++ = *fmt;
 	  
@@ -211,13 +210,21 @@ etherboot_vsprintf (char *buf, const char *fmt, const int *dp)
 int
 etherboot_sprintf (char *buf, const char *fmt, ...)
 {
-  return etherboot_vsprintf (buf, fmt, ((const int *) &fmt) + 1);
+  va_list ap;
+  int ret;
+  va_start(ap, fmt);
+  ret = etherboot_vsprintf (buf, fmt, ap);
+  va_end(ap);
+  return ret;
 }
 
 void
 etherboot_printf (const char *fmt, ...)
 {
-  (void) etherboot_vsprintf (0, fmt, ((const int *) &fmt) + 1);
+  va_list ap;
+  va_start(ap, fmt);
+  etherboot_vsprintf (0, fmt, ap);
+  va_end(ap);
 }
 
 int

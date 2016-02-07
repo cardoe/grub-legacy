@@ -101,7 +101,7 @@ static inline __const__ xfs_uint16_t
 le16 (xfs_uint16_t x)
 {
 	__asm__("xchgb %b0,%h0"	\
-		: "=q" (x) \
+		: "=Q" (x) \
 		:  "0" (x)); \
 		return x;
 }
@@ -109,9 +109,9 @@ le16 (xfs_uint16_t x)
 static inline __const__ xfs_uint32_t
 le32 (xfs_uint32_t x)
 {
-#if 0
+#if 1
         /* 386 doesn't have bswap.  */
-	__asm__("bswap %0" : "=r" (x) : "0" (x));
+	__asm__("bswapl %k0" : "=r" (x) : "0" (x));
 #else
 	/* This is slower but this works on all x86 architectures.  */
 	__asm__("xchgb %b0, %h0" \

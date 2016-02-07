@@ -29,7 +29,29 @@
 #include <shared.h>
 #include <graphics.h>
 
+#ifdef __MINIOS__
+#include <stdint.h>
+typedef uint8_t Bit8u;
+#include <vgafonts.h>
+#include <fbfront.h>
+#include <malloc.h>
+#define set_int1c_handler() (void)0
+#define unset_int1c_handler() (void)0
+static uint32_t *VIDEOMEM;
+static struct fbfront_dev *fb_dev;
+static uint32_t palette[17];
+short cursorX, cursorY;
+/* TODO: blink */
+uint32_t cursorBuf32[16*8];
+#define WIDTH 640
+#define HEIGHT 480
+#define DEPTH 32
+#define RAMSIZE (WIDTH * HEIGHT * (DEPTH / 8))
+#else
+#define fbfront_update(dev, x, y, w, h) (void)0
 int saved_videomode;
+#endif
+
 unsigned char *font8x16;
 
 int graphics_inited = 0;
@@ -37,11 +59,15 @@ static char splashimage[256];
 
 int shade = 1, no_cursor = 0;
 
+#ifdef __MINIOS__
+uint32_t VSHADOW[RAMSIZE];
+#else
 #define VSHADOW VSHADOW1
 unsigned char VSHADOW1[38400];
 unsigned char VSHADOW2[38400];
 unsigned char VSHADOW4[38400];
 unsigned char VSHADOW8[38400];
+#endif
 
 /* define the default viewable area */
 int view_x0 = 0;
@@ -128,6 +154,8 @@ static void graphics_scroll() {
     count_lines = k;
 
     no_scroll = 0;
+
+    fbfront_update(fb_dev, view_x0 * 8, view_y0 * 16, (view_x1 - view_x0) * 8, (view_y1 - view_y0) * 16);
 }
 
 /* Set the splash image */
@@ -153,17 +181,29 @@ char *graphics_get_splash(void) {
 int graphics_init()
 {
     if (!graphics_inited) {
+#ifdef __MINIOS__
+	VIDEOMEM = memalign(PAGE_SIZE, RAMSIZE);
+	if (!(fb_dev = fb_open(VIDEOMEM, WIDTH, HEIGHT, DEPTH))) {
+	    free(VIDEOMEM);
+	    return 0;
+	}
+#else
         saved_videomode = set_videomode(0x12);
         if (get_videomode() != 0x12) {
             set_videomode(saved_videomode);
             return 0;
         }
+#endif
         graphics_inited = 1;
     }
     else
         return 1;
 
+#ifdef __MINIOS__
+    font8x16 = vgafont16;
+#else
     font8x16 = (unsigned char*)graphics_get_font();
+#endif
 
     /* make sure that the highlight color is set correctly */
     graphics_highlight_color = ((graphics_normal_color >> 4) | 
@@ -175,7 +215,11 @@ int graphics_init()
         grub_printf("Failed to read splash image (%s)\n", splashimage);
         grub_printf("Press any key to continue...");
         getkey();
+#ifdef __MINIOS__
+	fb_close();
+#else
         set_videomode(saved_videomode);
+#endif
         graphics_inited = 0;
         return 0;
     }
@@ -189,8 +233,13 @@ int graphics_init()
 void graphics_end(void)
 {
     if (graphics_inited) {
+#ifdef __MINIOS__
+	fb_close();
+	free(VIDEOMEM);
+#else
         unset_int1c_handler();
         set_videomode(saved_videomode);
+#endif
         graphics_inited = 0;
         no_cursor = 0;
     }
@@ -203,15 +252,19 @@ void graphics_putchar(int ch) {
     graphics_cursor(0);
 
     if (ch == '\n') {
+	fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
         if (fonty + 1 < view_y1)
             graphics_setxy(fontx, fonty + 1);
         else
             graphics_scroll();
         graphics_cursor(1);
+	fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
         return;
     } else if (ch == '\r') {
+	fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
         graphics_setxy(view_x0, fonty);
         graphics_cursor(1);
+	fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
         return;
     }
 
@@ -223,6 +276,7 @@ void graphics_putchar(int ch) {
         text[fonty * 80 + fontx] |= 0x100;
 
     graphics_cursor(0);
+    fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
 
     if ((fontx + 1) >= view_x1) {
         graphics_setxy(view_x0, fonty);
@@ -231,13 +285,16 @@ void graphics_putchar(int ch) {
         else
             graphics_scroll();
         graphics_cursor(1);
+	fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
         do_more ();
         graphics_cursor(0);
+	fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
     } else {
         graphics_setxy(fontx + 1, fonty);
     }
 
     graphics_cursor(1);
+    fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
 }
 
 /* get the current location of the cursor */
@@ -247,10 +304,12 @@ int graphics_getxy(void) {
 
 void graphics_gotoxy(int x, int y) {
     graphics_cursor(0);
+    fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
 
     graphics_setxy(x, y);
 
     graphics_cursor(1);
+    fbfront_update(fb_dev, cursorX, cursorY, 8, 16);
 }
 
 void graphics_cls(void) {
@@ -261,15 +320,21 @@ void graphics_cls(void) {
     graphics_gotoxy(view_x0, view_y0);
 
     mem = (unsigned char*)VIDEOMEM;
+#ifndef __MINIOS__
     s1 = (unsigned char*)VSHADOW1;
     s2 = (unsigned char*)VSHADOW2;
     s4 = (unsigned char*)VSHADOW4;
     s8 = (unsigned char*)VSHADOW8;
+#endif
 
     for (i = 0; i < 80 * 30; i++)
         text[i] = ' ';
     graphics_cursor(1);
 
+#ifdef __MINIOS__
+    memcpy(mem, VSHADOW, RAMSIZE);
+    fbfront_update(fb_dev, 0, 0, 640, 480);
+#else
     BitMask(0xff);
 
     /* plane 1 */
@@ -289,6 +354,7 @@ void graphics_cls(void) {
     grub_memcpy(mem, s8, 38400);
 
     MapMask(15);
+#endif
 
     if (no_cursor) {
         no_cursor = 0;
@@ -334,6 +400,11 @@ int graphics_setcursor (int on) {
         graphics_cursor(1);
     }
     return 0;
+}
+
+void graphics_set_palette(int idx, int red, int green, int blue)
+{
+    palette[idx] = (red << (16 + 2)) | (green << (8 + 2)) | (blue << 2);
 }
 
 /* Read in the splashscreen image and set the palette up appropriately.
@@ -412,18 +483,19 @@ int read_image(char *s)
         }
 
         if (len == 6 && idx < 15) {
-            int r = ((hex(buf[0]) << 4) | hex(buf[1])) >> 2;
-            int g = ((hex(buf[2]) << 4) | hex(buf[3])) >> 2;
-            int b = ((hex(buf[4]) << 4) | hex(buf[5])) >> 2;
+            int r = ((hex(buf[0]) << 4) | hex(buf[1]));
+            int g = ((hex(buf[2]) << 4) | hex(buf[3]));
+            int b = ((hex(buf[4]) << 4) | hex(buf[5]));
 
             pal[idx] = base;
-            graphics_set_palette(idx, r, g, b);
+            graphics_set_palette(idx, r / 4, g / 4, b / 4);
             ++idx;
         }
     }
 
     x = y = len = 0;
 
+#ifndef __MINIOS__
     s1 = (unsigned char*)VSHADOW1;
     s2 = (unsigned char*)VSHADOW2;
     s4 = (unsigned char*)VSHADOW4;
@@ -431,6 +503,7 @@ int read_image(char *s)
 
     for (i = 0; i < 38400; i++)
         s1[i] = s2[i] = s4[i] = s8[i] = 0;
+#endif
 
     /* parse xpm data */
     while (y < height) {
@@ -450,6 +523,9 @@ int read_image(char *s)
                     break;
                 }
 
+#ifdef __MINIOS__
+	    VSHADOW[x + y * 640] = palette[i];
+#else
             mask = 0x80 >> (x & 7);
             if (c & 1)
                 s1[len + (x >> 3)] |= mask;
@@ -459,6 +535,7 @@ int read_image(char *s)
                 s4[len + (x >> 3)] |= mask;
             if (c & 8)
                 s8[len + (x >> 3)] |= mask;
+#endif
 
             if (++x >= 640) {
                 x = 0;
@@ -493,7 +570,13 @@ int hex(int v)
 }
 
 void graphics_cursor(int set) {
-    unsigned char *pat, *mem, *ptr, chr[16 << 2];
+    unsigned char *pat;
+#ifdef __MINIOS__
+    uint32_t *mem, *ptr, chr[16 * 8];
+    int j;
+#else
+    unsigned char *mem, *ptr, chr[16 << 2];
+#endif
     int i, ch, invert, offset;
 
     if (set && (no_cursor || no_scroll))
@@ -504,71 +587,127 @@ void graphics_cursor(int set) {
     invert = (text[fonty * 80 + fontx] & 0xff00) != 0;
     pat = font8x16 + (ch << 4);
 
-    mem = (unsigned char*)VIDEOMEM + offset;
+    mem = (unsigned char*)VIDEOMEM + offset
+#ifdef __MINIOS__
+	* 8 * 4
+#endif
+	;
 
     if (!set) {
         for (i = 0; i < 16; i++) {
             unsigned char mask = pat[i];
 
             if (!invert) {
+#ifdef __MINIOS__
+		memcpy(chr + i * 8, VSHADOW + offset * 8, 8 * 4);
+#else
                 chr[i     ] = ((unsigned char*)VSHADOW1)[offset];
                 chr[16 + i] = ((unsigned char*)VSHADOW2)[offset];
                 chr[32 + i] = ((unsigned char*)VSHADOW4)[offset];
                 chr[48 + i] = ((unsigned char*)VSHADOW8)[offset];
+#endif
 
                 if (shade) {
                     if (ch == DISP_VERT || ch == DISP_LL ||
                         ch == DISP_UR || ch == DISP_LR) {
                         unsigned char pmask = ~(pat[i] >> 1);
 
+#ifdef __MINIOS__
+			for (j = 0; j < 8; j++)
+			    if (!(pmask & (1U << j)))
+				chr[i * 8 + (7 - j)] = palette[0];
+#else
                         chr[i     ] &= pmask;
                         chr[16 + i] &= pmask;
                         chr[32 + i] &= pmask;
                         chr[48 + i] &= pmask;
+#endif
                     }
                     if (i > 0 && ch != DISP_VERT) {
                         unsigned char pmask = ~(pat[i - 1] >> 1);
 
+#ifdef __MINIOS__
+			for (j = 0; j < 8; j++)
+			    if (!(pmask & (1U << j)))
+				chr[i * 8 + (7 - j)] = palette[0];
+#else
                         chr[i     ] &= pmask;
                         chr[16 + i] &= pmask;
                         chr[32 + i] &= pmask;
                         chr[48 + i] &= pmask;
+#endif
                         if (ch == DISP_HORIZ || ch == DISP_UR || ch == DISP_LR) {
                             pmask = ~pat[i - 1];
 
+#ifdef __MINIOS__
+			    for (j = 0; j < 8; j++)
+				if (!(pmask & (1U << j)))
+				    chr[i * 8 + (7 - j)] = palette[0];
+#else
                             chr[i     ] &= pmask;
                             chr[16 + i] &= pmask;
                             chr[32 + i] &= pmask;
                             chr[48 + i] &= pmask;
+#endif
                         }
                     }
                 }
+#ifdef __MINIOS__
+		for (j = 0; j < 8; j++)
+		    if (mask & (1U << j))
+			chr[i * 8 + (7 - j)] = palette[15];
+#else
                 chr[i     ] |= mask;
                 chr[16 + i] |= mask;
                 chr[32 + i] |= mask;
                 chr[48 + i] |= mask;
+#endif
 
                 offset += 80;
             }
             else {
+#ifdef __MINIOS__
+		for (j = 0; j < 8; j++)
+		    if (mask & (1U << j))
+			chr[i * 8 + (7 - j)] = palette[15];
+		    else
+			chr[i * 8 + (7 - j)] = palette[0];
+#else
                 chr[i     ] = mask;
                 chr[16 + i] = mask;
                 chr[32 + i] = mask;
                 chr[48 + i] = mask;
+#endif
             }
         }
     }
     else {
+#ifdef __MINIOS__
+        ptr = mem;
+        for (i = 0; i < 16; i++, ptr += 80 * 8)
+	    for (j = 0; j < 8; j++) {
+		if (pat[i] & (1U << (7 - j)))
+		    cursorBuf32[i * 8 + j] = ptr[j] = palette[0];
+		else
+		    cursorBuf32[i * 8 + j] = ptr[j] = palette[15];
+	    }
+#else
         MapMask(15);
         ptr = mem;
         for (i = 0; i < 16; i++, ptr += 80) {
             cursorBuf[i] = pat[i];
             *ptr = ~pat[i];
         }
+#endif
         return;
     }
 
     offset = 0;
+#ifdef __MINIOS__
+    ptr = mem;
+    for (j = 0; j < 16; j++, ptr += 80 * 8)
+	memcpy(ptr, chr + j * 8 + offset * 8, 8 * 4);
+#else
     for (i = 1; i < 16; i <<= 1, offset += 16) {
         int j;
 
@@ -579,6 +718,7 @@ void graphics_cursor(int set) {
     }
 
     MapMask(15);
+#endif
 }
 
 #endif /* SUPPORT_GRAPHICS */

@@ -20,8 +20,10 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#ifndef __MINIOS__
 /* magic constant */
 #define VIDEOMEM 0xA0000
+#endif
 
 /* function prototypes */
 char *graphics_get_splash(void);

@@ -45,8 +45,10 @@
 #ifdef GRUB_UTIL
 # include <device.h>
 #else /* ! GRUB_UTIL */
+#ifndef __MINIOS
 # include <apic.h>
 # include <smp-imps.h>
+#endif
 #endif /* ! GRUB_UTIL */
 
 #ifdef USE_MD5_PASSWORDS
@@ -246,11 +248,13 @@ static int
 boot_func (char *arg, int flags)
 {
   struct term_entry *prev_term = current_term;
+#ifndef __MINIOS__
   /* Clear the int15 handler if we can boot the kernel successfully.
      This assumes that the boot code never fails only if KERNEL_TYPE is
      not KERNEL_TYPE_NONE. Is this assumption is bad?  */
   if (kernel_type != KERNEL_TYPE_NONE)
     unset_int15_handler ();
+#endif
 
   /* if our terminal needed initialization, we should shut it down
    * before booting the kernel, but we want to save what it was so
@@ -261,13 +265,21 @@ boot_func (char *arg, int flags)
       current_term = term_table; /* assumption: console is first */
     }
 
+#ifndef __MINIOS__
 #ifdef SUPPORT_NETBOOT
   /* Shut down the networking.  */
   cleanup_net ();
 #endif
+#endif
   
   switch (kernel_type)
     {
+#ifdef __MINIOS__
+    case KERNEL_TYPE_PV:
+      /* Paravirtualized */
+      pv_boot();
+      break;
+#else
     case KERNEL_TYPE_FREEBSD:
     case KERNEL_TYPE_NETBSD:
       /* *BSD */
@@ -319,6 +331,7 @@ boot_func (char *arg, int flags)
       multi_boot ((int) entry_addr, (int) &mbi);
       break;
 
+#endif
     default:
       errnum = ERR_BOOT_COMMAND;
       return 1;
@@ -1123,6 +1136,7 @@ static struct builtin builtin_clear =
 };
 
 
+#ifndef __MINIOS__
 /* displayapm */
 static int
 displayapm_func (char *arg, int flags)
@@ -1163,8 +1177,10 @@ static struct builtin builtin_displayapm =
   "displayapm",
   "Display APM BIOS information."
 };
+#endif
 
 
+#ifndef __MINIOS__
 /* displaymem */
 static int
 displaymem_func (char *arg, int flags)
@@ -1218,6 +1234,7 @@ static struct builtin builtin_displaymem =
   "Display what GRUB thinks the system address space map of the"
   " machine is, including all regions of physical RAM installed."
 };
+#endif
 
 
 /* dump FROM TO */
@@ -1280,6 +1297,7 @@ static struct builtin builtin_dump =
 #endif /* GRUB_UTIL */
 
 
+#ifndef __MINIOS__
 static char embed_info[32];
 /* embed */
 /* Embed a Stage 1.5 in the first cylinder after MBR or in the
@@ -1413,6 +1431,7 @@ static struct builtin builtin_embed =
   " is a drive, or in the \"bootloader\" area if DEVICE is a FFS partition."
   " Print the number of sectors which STAGE1_5 occupies if successful."
 };
+#endif
 
 
 /* fallback */
@@ -1956,6 +1975,7 @@ static struct builtin builtin_ifconfig =
 #endif /* SUPPORT_NETBOOT */
 
 
+#ifndef __MINIOS__
 /* impsprobe */
 static int
 impsprobe_func (char *arg, int flags)
@@ -1982,6 +2002,7 @@ static struct builtin builtin_impsprobe =
   " configuration table and boot the various CPUs which are found into"
   " a tight loop."
 };
+#endif
 
 
 /* initrd */
@@ -1992,6 +2013,7 @@ initrd_func (char *arg, int flags)
     {
     case KERNEL_TYPE_LINUX:
     case KERNEL_TYPE_BIG_LINUX:
+    case KERNEL_TYPE_PV:
       if (! load_initrd (arg))
 	return 1;
       break;
@@ -2015,6 +2037,7 @@ static struct builtin builtin_initrd =
 };
 
 
+#ifndef __MINIOS__
 /* install */
 static int
 install_func (char *arg, int flags)
@@ -2565,8 +2588,10 @@ static struct builtin builtin_install =
   " for LBA mode. If the option `--stage2' is specified, rewrite the Stage"
   " 2 via your OS's filesystem instead of the raw device."
 };
+#endif
 
 
+#ifndef __MINIOS__
 /* ioprobe */
 static int
 ioprobe_func (char *arg, int flags)
@@ -2608,6 +2633,7 @@ static struct builtin builtin_ioprobe =
   "ioprobe DRIVE",
   "Probe I/O ports used for the drive DRIVE."
 };
+#endif
 
 /* print */
 static int
@@ -2894,6 +2920,7 @@ module_func (char *arg, int flags)
   switch (kernel_type)
     {
     case KERNEL_TYPE_MULTIBOOT:
+    case KERNEL_TYPE_PV:
       if (mb_cmdline + len + 1 > (char *) MB_CMDLINE_BUF + MB_CMDLINE_BUFLEN)
 	{
 	  errnum = ERR_WONT_FIT;
@@ -3786,6 +3813,7 @@ static struct builtin builtin_savedefault =
 };
 
 
+#ifndef __MINIOS__
 #ifdef SUPPORT_SERIAL
 /* serial */
 static int
@@ -3937,8 +3965,10 @@ static struct builtin builtin_serial =
   " default values are COM1, 9600, 8N1."
 };
 #endif /* SUPPORT_SERIAL */
+#endif
 
 
+#ifndef __MINIOS__
 /* setkey */
 struct keysym
 {
@@ -4184,8 +4214,10 @@ static struct builtin builtin_setkey =
   " is a digit), and delete. If no argument is specified, reset key"
   " mappings."
 };
+#endif
 
 
+#ifndef __MINIOS__
 /* setup */
 static int
 setup_func (char *arg, int flags)
@@ -4495,6 +4527,7 @@ static struct builtin builtin_setup =
   " partition where GRUB images reside, specify the option `--stage2'"
   " to tell GRUB the file name under your OS."
 };
+#endif
 
 
 #if defined(SUPPORT_SERIAL) || defined(SUPPORT_HERCULES) || defined(SUPPORT_GRAPHICS)
@@ -4799,6 +4832,7 @@ static struct builtin builtin_terminfo =
 #endif /* SUPPORT_SERIAL */
 	  
 
+#ifndef __MINIOS__
 /* testload */
 static int
 testload_func (char *arg, int flags)
@@ -4885,8 +4919,10 @@ static struct builtin builtin_testload =
   " consistent offset error. If this test succeeds, then a good next"
   " step is to try loading a kernel."
 };
+#endif
 
 
+#ifndef __MINIOS__
 /* testvbe MODE */
 static int
 testvbe_func (char *arg, int flags)
@@ -4990,6 +5026,7 @@ static struct builtin builtin_testvbe =
   "testvbe MODE",
   "Test the VBE mode MODE. Hit any key to return."
 };
+#endif
 
 
 #ifdef SUPPORT_NETBOOT
@@ -5086,6 +5123,7 @@ static struct builtin builtin_unhide =
 };
 
 
+#ifndef __MINIOS__
 /* uppermem */
 static int
 uppermem_func (char *arg, int flags)
@@ -5106,8 +5144,10 @@ static struct builtin builtin_uppermem =
   "Force GRUB to assume that only KBYTES kilobytes of upper memory are"
   " installed.  Any system address range maps are discarded."
 };
+#endif
 
 
+#ifndef __MINIOS__
 /* vbeprobe */
 static int
 vbeprobe_func (char *arg, int flags)
@@ -5214,6 +5254,7 @@ static struct builtin builtin_vbeprobe =
   "Probe VBE information. If the mode number MODE is specified, show only"
   " the information about only the mode."
 };
+#endif
   
 
 /* The table of builtin commands. Sorted in dictionary order.  */
@@ -5244,12 +5285,16 @@ struct builtin *builtin_table[] =
 #ifdef SUPPORT_NETBOOT
   &builtin_dhcp,
 #endif /* SUPPORT_NETBOOT */
+#ifndef __MINIOS__
   &builtin_displayapm,
   &builtin_displaymem,
+#endif
 #ifdef GRUB_UTIL
   &builtin_dump,
 #endif /* GRUB_UTIL */
+#ifndef __MINIOS__
   &builtin_embed,
+#endif
   &builtin_fallback,
   &builtin_find,
 #ifdef SUPPORT_GRAPHICS
@@ -5264,10 +5309,14 @@ struct builtin *builtin_table[] =
 #ifdef SUPPORT_NETBOOT
   &builtin_ifconfig,
 #endif /* SUPPORT_NETBOOT */
+#ifndef __MINIOS__
   &builtin_impsprobe,
+#endif
   &builtin_initrd,
+#ifndef __MINIOS__
   &builtin_install,
   &builtin_ioprobe,
+#endif
   &builtin_kernel,
   &builtin_lock,
   &builtin_makeactive,
@@ -5294,11 +5343,13 @@ struct builtin *builtin_table[] =
   &builtin_root,
   &builtin_rootnoverify,
   &builtin_savedefault,
+#ifndef __MINIOS__
 #ifdef SUPPORT_SERIAL
   &builtin_serial,
 #endif /* SUPPORT_SERIAL */
   &builtin_setkey,
   &builtin_setup,
+#endif
 #ifdef SUPPORT_GRAPHICS
   &builtin_shade,
   &builtin_splashimage,
@@ -5309,16 +5360,20 @@ struct builtin *builtin_table[] =
 #ifdef SUPPORT_SERIAL
   &builtin_terminfo,
 #endif /* SUPPORT_SERIAL */
+#ifndef __MINIOS__
   &builtin_testload,
   &builtin_testvbe,
+#endif
 #ifdef SUPPORT_NETBOOT
   &builtin_tftpserver,
 #endif /* SUPPORT_NETBOOT */
   &builtin_timeout,
   &builtin_title,
   &builtin_unhide,
+#ifndef __MINIOS__
   &builtin_uppermem,
   &builtin_vbeprobe,
+#endif
 #ifdef SUPPORT_GRAPHICS
   &builtin_viewport,
 #endif

@@ -20,6 +20,7 @@
 
 #include <shared.h>
 #include <term.h>
+#include <stdarg.h>
 
 #ifdef SUPPORT_HERCULES
 # include <hercules.h>
@@ -36,6 +37,7 @@
 #ifndef STAGE1_5
 struct term_entry term_table[] =
   {
+#ifdef SUPPORT_CONSOLE
     {
       "console",
       0,
@@ -52,6 +54,7 @@ struct term_entry term_table[] =
       0, 
       0
     },
+#endif
 #ifdef SUPPORT_SERIAL
     {
       "serial",
@@ -131,9 +134,9 @@ print_error (void)
 }
 
 char *
-convert_to_ascii (char *buf, int c,...)
+convert_to_ascii (char *buf, int c, int _num)
 {
-  unsigned long num = *((&c) + 1), mult = 10;
+  unsigned long num = _num, mult = 10;
   char *ptr = buf;
 
 #ifndef STAGE1_5
@@ -182,11 +185,11 @@ grub_putstr (const char *str)
 void
 grub_printf (const char *format,...)
 {
-  int *dataptr = (int *) &format;
+  va_list ap;
   char c, str[16];
-  
-  dataptr++;
 
+  va_start(ap, format);
+  
   while ((c = *(format++)) != 0)
     {
       if (c != '%')
@@ -200,21 +203,32 @@ grub_printf (const char *format,...)
 	  case 'X':
 #endif
 	  case 'u':
-	    *convert_to_ascii (str, c, *((unsigned long *) dataptr++)) = 0;
+	  {
+	    unsigned i = va_arg(ap, unsigned);
+	    *convert_to_ascii (str, c, i) = 0;
 	    grub_putstr (str);
 	    break;
+          }
 
 #ifndef STAGE1_5
 	  case 'c':
-	    grub_putchar ((*(dataptr++)) & 0xff);
+	  {
+	    int c = va_arg(ap, int);
+	    grub_putchar (c & 0xff);
 	    break;
+	  }
 
 	  case 's':
-	    grub_putstr ((char *) *(dataptr++));
+	  {
+	    char *s = va_arg(ap, char*);
+	    grub_putstr (s);
 	    break;
+	  }
 #endif
 	  }
     }
+
+  va_end(ap);
 }
 
 #ifndef STAGE1_5
@@ -223,11 +237,11 @@ grub_sprintf (char *buffer, const char *format, ...)
 {
   /* XXX hohmuth
      ugly hack -- should unify with printf() */
-  int *dataptr = (int *) &format;
+  va_list ap;
   char c, *ptr, str[16];
   char *bp = buffer;
 
-  dataptr++;
+  va_start(ap, format);
 
   while ((c = *format++) != 0)
     {
@@ -237,26 +251,35 @@ grub_sprintf (char *buffer, const char *format, ...)
 	switch (c = *(format++))
 	  {
 	  case 'd': case 'u': case 'x':
-	    *convert_to_ascii (str, c, *((unsigned long *) dataptr++)) = 0;
+	  {
+	    unsigned i = va_arg(ap, unsigned);
+	    *convert_to_ascii (str, c, i) = 0;
 
 	    ptr = str;
 
 	    while (*ptr)
 	      *bp++ = *(ptr++); /* putchar(*(ptr++)); */
 	    break;
+	  }
 
-	  case 'c': *bp++ = (*(dataptr++))&0xff;
+	  case 'c':
+	  {
+	    int c = va_arg(ap, int);
+	    *bp++ = c&0xff;
 	    /* putchar((*(dataptr++))&0xff); */
 	    break;
+	  }
 
 	  case 's':
-	    ptr = (char *) (*(dataptr++));
+	    ptr = va_arg(ap, char *);
 
 	    while ((c = *ptr++) != 0)
 	      *bp++ = c; /* putchar(c); */
 	    break;
 	  }
     }
+
+  va_end(ap);
 
   *bp = 0;
   return bp - buffer;
@@ -1263,12 +1286,14 @@ memcheck (int addr, int len)
     return ! errnum;
 #endif /* GRUB_UTIL */
 
+#ifndef __MINIOS__
   if ((addr < RAW_ADDR (0x1000))
       || (addr < RAW_ADDR (0x100000)
 	  && RAW_ADDR (mbi.mem_lower * 1024) < (addr + len))
       || (addr >= RAW_ADDR (0x100000)
 	  && RAW_ADDR (mbi.mem_upper * 1024) < ((addr - 0x100000) + len)))
     errnum = ERR_WONT_FIT;
+#endif
 
   return ! errnum;
 }
@@ -1342,7 +1367,7 @@ grub_strcpy (char *dest, const char *src)
 }
 #endif /* ! STAGE1_5 */
 
-#ifndef GRUB_UTIL
+#if !defined(GRUB_UTIL) && !defined(__MINIOS__)
 # undef memcpy
 /* GCC emits references to memcpy() for struct copies etc.  */
 void *memcpy (void *dest, const void *src, int n)  __attribute__ ((alias ("grub_memmove")));

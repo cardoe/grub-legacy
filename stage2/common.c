@@ -137,6 +137,7 @@ mmap_avail_at (unsigned long bottom)
 }
 #endif /* ! STAGE1_5 */
 
+#ifndef __MINIOS__
 /* This queries for BIOS information.  */
 void
 init_bios_info (void)
@@ -335,3 +336,4 @@ init_bios_info (void)
   /* Start main routine here.  */
   cmain ();
 }
+#endif

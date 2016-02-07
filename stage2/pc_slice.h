@@ -38,50 +38,50 @@
  */
 
 #define PC_MBR_CHECK_SIG(mbr_ptr) \
-  ( *( (unsigned short *) (((int) mbr_ptr) + PC_MBR_SIG_OFFSET) ) \
+  ( *( (unsigned short *) (((long) mbr_ptr) + PC_MBR_SIG_OFFSET) ) \
    == PC_MBR_SIGNATURE )
 
 #define PC_MBR_SIG(mbr_ptr) \
-  ( *( (unsigned short *) (((int) mbr_ptr) + PC_MBR_SIG_OFFSET) ) )
+  ( *( (unsigned short *) (((long) mbr_ptr) + PC_MBR_SIG_OFFSET) ) )
 
 #define PC_SLICE_FLAG(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_HEAD(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 1 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 1 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_SEC(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 2 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 2 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_CYL(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 3 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 3 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_TYPE(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 4 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 4 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_EHEAD(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 5 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 5 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_ESEC(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 6 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 6 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_ECYL(mbr_ptr, part) \
-  ( *( (unsigned char *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 7 \
+  ( *( (unsigned char *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 7 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_START(mbr_ptr, part) \
-  ( *( (unsigned long *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 8 \
+  ( *( (unsigned long *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 8 \
 			  + (part << 4)) ) )
 
 #define PC_SLICE_LENGTH(mbr_ptr, part) \
-  ( *( (unsigned long *) (((int) mbr_ptr) + PC_SLICE_OFFSET + 12 \
+  ( *( (unsigned long *) (((long) mbr_ptr) + PC_SLICE_OFFSET + 12 \
 			  + (part << 4)) ) )
 
 

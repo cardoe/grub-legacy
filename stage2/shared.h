@@ -39,6 +39,10 @@
 extern char *grub_scratch_mem;
 # define RAW_ADDR(x) ((x) + (int) grub_scratch_mem)
 # define RAW_SEG(x) (RAW_ADDR ((x) << 4) >> 4)
+#elif defined(__MINIOS__)
+extern char grub_scratch_mem[];
+# define RAW_ADDR(x) ((x) + (int) grub_scratch_mem)
+# define RAW_SEG(x) (RAW_ADDR ((x) << 4) >> 4)
 #else
 # define RAW_ADDR(x) (x)
 # define RAW_SEG(x) (x)
@@ -710,7 +714,9 @@ void grub_reboot (void) __attribute__ ((noreturn));
 
 /* Halt the system, using APM if possible. If NO_APM is true, don't use
    APM even if it is available.  */
+#ifndef __MINIOS__
 void grub_halt (int no_apm) __attribute__ ((noreturn));
+#endif
 
 /* Copy MAP to the drive map and set up int13_handler.  */
 void set_int13_handler (unsigned short *map);
@@ -860,7 +866,8 @@ typedef enum
   KERNEL_TYPE_BIG_LINUX,	/* Big Linux.  */
   KERNEL_TYPE_FREEBSD,		/* FreeBSD.  */
   KERNEL_TYPE_NETBSD,		/* NetBSD.  */
-  KERNEL_TYPE_CHAINLOADER	/* Chainloader.  */
+  KERNEL_TYPE_CHAINLOADER,	/* Chainloader.  */
+  KERNEL_TYPE_PV		/* Paravirtualized.  */
 }
 kernel_t;
 
@@ -893,7 +900,7 @@ int grub_strcmp (const char *s1, const char *s2);
 int grub_strlen (const char *str);
 char *grub_strcpy (char *dest, const char *src);
 
-#ifndef GRUB_UTIL
+#if !defined(GRUB_UTIL) && !defined(__MINIOS__)
 typedef unsigned long grub_jmp_buf[6];
 #else
 /* In the grub shell, use the libc jmp_buf instead.  */
@@ -901,7 +908,7 @@ typedef unsigned long grub_jmp_buf[6];
 # define grub_jmp_buf jmp_buf
 #endif
 
-#ifdef GRUB_UTIL
+#if defined(GRUB_UTIL) || defined(__MINIOS__)
 # define grub_setjmp	setjmp
 # define grub_longjmp	longjmp
 #else /* ! GRUB_UTIL */
@@ -917,7 +924,7 @@ extern grub_jmp_buf restart_cmdline_env;
 /* misc */
 void init_page (void);
 void print_error (void);
-char *convert_to_ascii (char *buf, int c, ...);
+char *convert_to_ascii (char *buf, int c, int num);
 int get_cmdline (char *prompt, char *cmdline, int maxlen,
 		 int echo_char, int history);
 int substring (const char *s1, const char *s2);

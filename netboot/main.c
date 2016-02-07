@@ -55,7 +55,7 @@ struct rom_info rom;
 static int vendorext_isvalid;
 static unsigned long netmask;
 static struct bootpd_t bootp_data;
-static unsigned long xid;
+static unsigned int xid;
 
 #define	BOOTP_DATA_ADDR	(&bootp_data)
 
@@ -781,7 +781,7 @@ await_reply (int type, int ival, void *ptr, int timeout)
 
 	      arpreply = (struct arprequest *) &nic.packet[ETH_HLEN];
 	      
-	      if (arpreply->opcode == htons (ARP_REPLY)
+	      if (arpreply->opcode == htons (ARP_REPLY) && ptr
 		  && ! grub_memcmp (arpreply->sipaddr, ptr, sizeof (in_addr))
 		  && type == AWAIT_ARP)
 		{
@@ -830,7 +830,7 @@ await_reply (int type, int ival, void *ptr, int timeout)
 	    {
 	      arpreply = (struct arprequest *) &nic.packet[ETH_HLEN];
 	      
-	      if (arpreply->opcode == htons (RARP_REPLY)
+	      if (arpreply->opcode == htons (RARP_REPLY) && ptr
 		  && ! grub_memcmp (arpreply->thwaddr, ptr, ETH_ALEN))
 		{
 		  grub_memmove ((char *) arptable[ARP_SERVER].node,
@@ -1138,7 +1138,7 @@ RFC2131_SLEEP_INTERVAL - sleep for expotentially longer times
 long
 rfc2131_sleep_interval (int base, int exp)
 {
-  static long seed = 0;
+  static unsigned seed = 0;
   long q;
   unsigned long tmo;
   

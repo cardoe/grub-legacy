@@ -31,10 +31,10 @@ grub_jmp_buf restart_env;
 #if defined(PRESET_MENU_STRING) || defined(SUPPORT_DISKLESS)
 
 # if defined(PRESET_MENU_STRING)
-static const char *preset_menu = PRESET_MENU_STRING;
+const char *preset_menu = PRESET_MENU_STRING;
 # elif defined(SUPPORT_DISKLESS)
 /* Execute the command "bootp" automatically.  */
-static const char *preset_menu = "bootp\n";
+const char *preset_menu = "bootp\n";
 # endif /* SUPPORT_DISKLESS */
 
 static int preset_menu_offset;

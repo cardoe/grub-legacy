@@ -37,7 +37,7 @@ static int keep_track = 1;
 
 /* Hardware-dependent definitions.  */
 
-#ifndef GRUB_UTIL
+#if !defined(GRUB_UTIL) && !defined(__MINIOS__)
 /* The structure for speed vs. divisor.  */
 struct divisor
 {
@@ -222,6 +222,8 @@ serial_translate_key_sequence (void)
       {('3' | ('~' << 8)), 4},
       {('5' | ('~' << 8)), 7},
       {('6' | ('~' << 8)), 3},
+      {('7' | ('~' << 8)), 1},
+      {('8' | ('~' << 8)), 5},
     };
   
   /* The buffer must start with ``ESC [''.  */

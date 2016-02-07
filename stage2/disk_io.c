@@ -133,7 +133,14 @@ int filemax;
 static inline unsigned long
 log2 (unsigned long word)
 {
-  asm volatile ("bsfl %1,%0"
+  asm volatile ("bsf"
+#ifdef __i386__
+		  "l"
+#endif
+#ifdef __x86_64__
+		  "q"
+#endif  
+		  " %1,%0"
 		: "=r" (word)
 		: "r" (word));
   return word;

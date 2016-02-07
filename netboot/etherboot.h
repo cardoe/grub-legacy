@@ -246,7 +246,7 @@ Author: Martin Renters
 
 typedef struct
 {
-  unsigned long	s_addr;
+  unsigned int	s_addr;
 }
 in_addr;
 
@@ -302,7 +302,7 @@ struct bootp_t
   char bp_htype;
   char bp_hlen;
   char bp_hops;
-  unsigned long bp_xid;
+  unsigned int bp_xid;
   unsigned short bp_secs;
   unsigned short unused;
   in_addr bp_ciaddr;
@@ -411,25 +411,25 @@ struct rpc_t
     
     struct
     {
-      long id;
-      long type;
-      long rpcvers;
-      long prog;
-      long vers;
-      long proc;
-      long data[1];
+      int id;
+      int type;
+      int rpcvers;
+      int prog;
+      int vers;
+      int proc;
+      int data[1];
     }
     call;
     
     struct
     {
-      long id;
-      long type;
-      long rstatus;
-      long verifier;
-      long v2;
-      long astatus;
-      long data[1];
+      int id;
+      int type;
+      int rstatus;
+      int verifier;
+      int v2;
+      int astatus;
+      int data[1];
     }
     reply;
   }
@@ -517,7 +517,9 @@ extern void eth_disable (void);
 
 /* misc.c */
 extern void twiddle (void);
+#ifndef __MINIOS__
 extern void sleep (int secs);
+#endif
 extern int getdec (char **s);
 extern void etherboot_printf (const char *, ...);
 extern int etherboot_sprintf (char *, const char *, ...);

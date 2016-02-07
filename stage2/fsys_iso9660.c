@@ -43,7 +43,7 @@ struct iso_sb_info {
 
 /* iso fs inode data in memory */
 struct iso_inode_info {
-  unsigned long file_start;
+  unsigned int file_start;
 };
 
 #define ISO_SUPER	\
@@ -59,7 +59,14 @@ struct iso_inode_info {
 static inline unsigned long
 log2 (unsigned long word)
 {
-  asm volatile ("bsfl %1,%0"
+  asm volatile ("bsf"
+#ifdef __i386__
+		  "l"
+#endif
+#ifdef __x86_64__
+		  "q"
+#endif
+		  " %1,%0"
 		:          "=r" (word)
 		:          "r" (word));
   return word;
@@ -81,12 +88,12 @@ iso9660_devread (int sector, int byte_offset, int byte_len, char *buf)
   if (byte_len <= 0)
     return 1;
 
-  sector += (byte_offset >> sector_size_lg2);
-  byte_offset &= (buf_geom.sector_size - 1);
   asm volatile ("shl%L0 %1,%0"
 		: "=r"(sector)
 		: "Ic"((int8_t)(ISO_SECTOR_BITS - sector_size_lg2)),
 		"0"(sector));
+  sector += (byte_offset >> sector_size_lg2);
+  byte_offset &= (buf_geom.sector_size - 1);
 
 #if !defined(STAGE1_5)
   if (disk_read_hook && debug)
