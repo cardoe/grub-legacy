@@ -49,7 +49,8 @@ open_preset_menu (void)
     return 0;
 #endif /* GRUB_UTIL */
   
-  preset_menu_offset = 0;
+  if (preset_menu_offset)
+    return 0;
   return preset_menu != 0;
 }
 
@@ -934,7 +935,11 @@ cmain (void)
 	      len = grub_read (buf, sizeof (buf));
 	      if (len > 0)
 		{
+		  char *tmp;
 		  buf[sizeof (buf) - 1] = 0;
+		  if((tmp = grub_strstr(p, ":")) != NULL)
+		    p = tmp + 1;
+		  
 		  safe_parse_maxint (&p, &saved_entryno);
 		}
 
