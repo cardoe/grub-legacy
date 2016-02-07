@@ -2670,6 +2670,7 @@ you forget a command, you can run the command @command{help}
 * module::                      Load a module
 * modulenounzip::               Load a module without decompression
 * pause::                       Wait for a key press
+* print::                       Print a message
 * quit::                        Exit from the grub shell
 * reboot::                      Reboot your computer
 * read::                        Read data from memory
@@ -3073,6 +3074,16 @@ Print the @var{message}, then wait until a key is pressed. Note that
 placing @key{^G} (ASCII code 7) in the message will cause the speaker to
 emit the standard beep sound, which is useful when prompting the user to
 change floppies.
+@end deffn
+
+
+@node print
+@subsection print
+
+@deffn Command print message @dots{}
+Print the @var{message}. Note that placing @key{^G} (ASCII code 7) in the
+message will cause the speaker to emit the standard beep sound, which is
+useful for visually impaired people.
 @end deffn
 
 

@@ -2595,6 +2595,25 @@ static struct builtin builtin_ioprobe =
   "Probe I/O ports used for the drive DRIVE."
 };
 
+/* print */
+static int
+print_func (char *arg, int flags)
+{
+  printf("%s\n", arg);
+
+  return 0;
+}
+
+static struct builtin builtin_print =
+{
+  "print",
+  print_func,
+  BUILTIN_CMDLINE | BUILTIN_MENU | BUILTIN_NO_ECHO,
+  "print [MESSAGE ...]",
+  "Print MESSAGE."
+};
+
+
 
 /* kernel */
 static int
@@ -5142,6 +5161,7 @@ struct builtin *builtin_table[] =
   &builtin_parttype,
   &builtin_password,
   &builtin_pause,
+  &builtin_print,
 #ifdef GRUB_UTIL
   &builtin_quit,
 #endif /* GRUB_UTIL */
