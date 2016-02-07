@@ -395,7 +395,7 @@ restart:
 	 pressed.  
 	 This avoids polling (relevant in the grub-shell and later on
 	 in grub if interrupt driven I/O is done).  */
-      if (checkkey () >= 0 || grub_timeout < 0)
+      if (checkkey () > 0 || grub_timeout < 0)
 	{
 	  /* Key was pressed, show which entry is selected before GETKEY,
 	     since we're comming in here also on GRUB_TIMEOUT == -1 and
