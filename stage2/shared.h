@@ -796,6 +796,11 @@ int getxy (void);
 /* Set the cursor position. */
 void gotoxy (int x, int y);
 
+/* Internal pager
+   Returns 1 = if pager was used
+           0 = if pager wasn't used  */
+int do_more (void);
+
 /* Displays an ASCII character.  IBM displays will translate some
    characters to special graphical ones (see the DISP_* constants). */
 void grub_putchar (int c);
@@ -875,6 +880,7 @@ int grub_sprintf (char *buffer, const char *format, ...);
 int grub_tolower (int c);
 int grub_isspace (int c);
 int grub_strncat (char *s1, const char *s2, int n);
+void grub_memcpy(void *dest, const void *src, int len);
 void *grub_memmove (void *to, const void *from, int len);
 void *grub_memset (void *start, int c, int len);
 int grub_strncat (char *s1, const char *s2, int n);
