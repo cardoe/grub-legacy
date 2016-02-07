@@ -309,7 +309,7 @@ ext2fs_mount (void)
 {
   int retval = 1;
 
-  if ((((current_drive & 0x80) || (current_slice != 0))
+  if ((((current_slice != 0))
        && (current_slice != PC_SLICE_TYPE_EXT2FS)
        && (current_slice != PC_SLICE_TYPE_LINUX_RAID)
        && (! IS_PC_SLICE_TYPE_BSD_WITH_FS (current_slice, FS_EXT2FS))

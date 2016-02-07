@@ -47,7 +47,7 @@ vstafs_mount (void)
 {
   int retval = 1;
   
-  if( (((current_drive & 0x80) || (current_slice != 0))
+  if( (((current_slice != 0))
        && current_slice != PC_SLICE_TYPE_VSTAFS)
       ||  ! devread (0, 0, BLOCK_SIZE, (char *) FSYS_BUF)
       ||  FIRST_SECTOR->fs_magic != 0xDEADFACE)

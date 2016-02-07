@@ -70,7 +70,7 @@ fat_mount (void)
   __u32 magic, first_fat;
   
   /* Check partition type for harddisk */
-  if (((current_drive & 0x80) || (current_slice != 0))
+  if (((current_slice != 0))
       && ! IS_PC_SLICE_TYPE_FAT (current_slice)
       && (! IS_PC_SLICE_TYPE_BSD_WITH_FS (current_slice, FS_MSDOS)))
     return 0;
